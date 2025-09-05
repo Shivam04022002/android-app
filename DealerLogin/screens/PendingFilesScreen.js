@@ -1,46 +1,67 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert
 } from 'react-native';
 import Navbar from '../components/Navbar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import axios from 'axios';  
-
+import axios from 'axios';
+import { useNavigation } from '@react-navigation/native';
+import ViewLoanApplicationScreen from './ViewLoanApplicationScreen';
 
 export default function PendingFilesScreen({ navigation }) {
+
   const [user, setUser] = useState(null);
   const [files, setFiles] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
   useEffect(() => {
     const loadUser = async () => {
-      const userJson = await AsyncStorage.getItem('userInfo');
-      if (userJson) setUser(JSON.parse(userJson));
+      try {
+        const userJson = await AsyncStorage.getItem('userInfo');
+        console.log('Loaded user info:', userJson);
+        if (userJson) setUser(JSON.parse(userJson));
+      } catch (err) {
+        console.log('Error loading user info:', err);
+      }
     };
     loadUser();
 
-       const fetchPendingFiles = async () => {
+    const fetchPendingFiles = async () => {
       try {
         const token = await AsyncStorage.getItem('userToken');
-        const response = await axios.get("http://192.168.29.102:5000/api/pending-files",{ headers: {
-        Authorization: `Bearer ${token}`,
-      },});
+        console.log('User token:', token);
+
+        const response = await axios.get("http://192.168.29.138:5000/api/pending-files", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        console.log('Pending files fetched:', response.data);
         setFiles(response.data);
       } catch (error) {
-        console.error("Error fetching pending files:", error);
+        console.error("Error fetching pending files:", error.response?.data || error.message);
+        Alert.alert("Error", "Failed to fetch pending files.");
+      } finally {
+        setLoading(false);
       }
     };
     fetchPendingFiles();
   }, []);
-    
 
   const getFilteredFiles = () => {
     if (!startDate && !endDate) return files;
     return files.filter(f => {
-      if (startDate && f.date < startDate) return false;
-      if (endDate && f.date > endDate) return false;
+      const fileDate = new Date(f.createdAt);
+      if (startDate && fileDate < new Date(startDate)) return false;
+      if (endDate && fileDate > new Date(endDate)) return false;
       return true;
     });
   };
@@ -48,71 +69,82 @@ export default function PendingFilesScreen({ navigation }) {
   const filteredFiles = getFilteredFiles();
 
   const handleRowPress = (file) => {
-    navigation.navigate('ViewLoanApplicationScreen', { fileId: file.id });
+    console.log("Row pressed for file:", file); // good for debugging
+    navigation.navigate('ViewLoanApplicationScreen', { fileId: file._id });
   };
 
   return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#fff7ed' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff7ed' }}>
+      <View style={{ flex: 1, backgroundColor: '#fff' }}>
+        <Navbar user={user} onLogout={() => navigation.replace('Login')} />
 
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
-      <Navbar user={user} onLogout={() => navigation.replace('Login')} />
+        <ScrollView contentContainerStyle={{ paddingBottom: 30 }}>
+          <Text style={styles.heading}>Pending Files</Text>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 30 }}>
-        <Text style={styles.heading}>Pending Files</Text>
-        <View style={styles.filterRow}>
-          <View style={{ flex: 1, marginRight: 8 }}>
-            <Text style={styles.filterLabel}>Start Date</Text>
-            <TextInput
-              style={styles.filterInput}
-              placeholder="DD-MM-YYYY"
-              placeholderTextColor="#888"
-              value={startDate}
-              onChangeText={setStartDate}
-            />
+          <View style={styles.filterRow}>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <Text style={styles.filterLabel}>Start Date</Text>
+              <TextInput
+                style={styles.filterInput}
+                placeholder="YYYY-MM-DD"
+                placeholderTextColor="#888"
+                value={startDate}
+                onChangeText={setStartDate}
+              />
+            </View>
+            <View style={{ flex: 1, marginLeft: 8 }}>
+              <Text style={styles.filterLabel}>End Date</Text>
+              <TextInput
+                style={styles.filterInput}
+                placeholder="YYYY-MM-DD"
+                placeholderTextColor="#888"
+                value={endDate}
+                onChangeText={setEndDate}
+              />
+            </View>
           </View>
-          <View style={{ flex: 1, marginLeft: 8 }}>
-            <Text style={styles.filterLabel}>End Date</Text>
-            <TextInput
-              style={styles.filterInput}
-              placeholder="DD-MM-YYYY"
-              placeholderTextColor="#888"
-              value={endDate}
-              onChangeText={setEndDate}
-            />
-          </View>
-        </View>
 
-        {/* Table */}
-        <View style={styles.table}>
-          <View style={styles.tableHeader}>
-            <Text style={[styles.th, { flex: 2 }]}>Application ID</Text>
-            <Text style={[styles.th, { flex: 1 }]}>User ID</Text>
-            <Text style={[styles.th, { flex: 2 }]}>Name</Text>
-            <Text style={[styles.th, { flex: 2, textAlign: 'right' }]}>Date</Text>
-          </View>
-          {
-            filteredFiles.length === 0
-              ? <Text style={styles.noFilesText}>No pending files found.</Text>
-              : filteredFiles.map((file, idx) => (
-                <TouchableOpacity key={file.id} onPress={() => handleRowPress(file)} activeOpacity={0.65}>
-                  <View style={[
-                    styles.tableRow,
-                    idx === filteredFiles.length - 1 ? { borderBottomWidth: 0 } : {}
-                  ]}>
-                    <Text style={[styles.td, { flex: 2, fontWeight: 'bold' }]}>{file.id}</Text>
-                    <Text style={[styles.td, { flex: 1 }]}>{file.userId}</Text>
-                    <Text style={[styles.td, { flex: 2 }]}>{file.name}</Text>
-                    <Text style={[styles.td, { flex: 2, textAlign: 'right' }]}>{file.date}</Text>
+          <View style={styles.table}>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.th, { flex: 2 }]}>Application ID</Text>
+              <Text style={[styles.th, { flex: 2 }]}>User</Text>
+              <Text style={[styles.th, { flex: 2 }]}>Status</Text>
+              <Text style={[styles.th, { flex: 2, textAlign: 'right' }]}>Date</Text>
+            </View>
+
+            {loading ? (
+              <Text style={styles.noFilesText}>Loading pending files...</Text>
+            ) : filteredFiles.length === 0 ? (
+              <Text style={styles.noFilesText}>No pending files found.</Text>
+            ) : (
+              filteredFiles.map((file, idx) => (
+                <TouchableOpacity
+                  key={file._id}
+                  onPress={() => handleRowPress(file)}
+                  activeOpacity={0.65}
+                >
+                  <View
+                    style={[
+                      styles.tableRow,
+                      idx === filteredFiles.length - 1 ? { borderBottomWidth: 0 } : {},
+                    ]}
+                  >
+                    <Text style={[styles.td, { flex: 2, fontWeight: 'bold' }]}>{file._id}</Text>
+                    <Text style={[styles.td, { flex: 2 }]}>{file.user?.name || 'N/A'}</Text>
+                    <Text style={[styles.td, { flex: 2 }]}>{file.status}</Text>
+                    <Text style={[styles.td, { flex: 2, textAlign: 'right' }]}>
+                      {new Date(file.createdAt).toLocaleDateString()}
+                    </Text>
                   </View>
                 </TouchableOpacity>
               ))
-          }
-        </View>
-      </ScrollView>
-    </View>
+            )}
+          </View>
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   heading: {

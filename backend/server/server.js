@@ -30,6 +30,7 @@ app.use(cors({
 // Routes
 app.use('/api/applications', applicationRoutes);
 app.use('/api/auth', authRoutes);
+app.use("/api/pending-files", pendingFilesRoutes);
 
 connectDB();
 

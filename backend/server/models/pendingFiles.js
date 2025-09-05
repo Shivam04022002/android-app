@@ -8,13 +8,17 @@ const pendingFilesSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    formId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
     applicant: {
       name: String,
       email: String,
       phone: String,
       pan: String,
       form60: String,
-      // add other applicant fields as per your applications collection
     },
     coApplicant: {
       name: String,
@@ -22,7 +26,6 @@ const pendingFilesSchema = new mongoose.Schema(
       phone: String,
       pan: String,
       form60: String,
-      // add other co-applicant fields as needed
     },
     vehicleDetails: {
       brandName: String,
@@ -30,18 +33,38 @@ const pendingFilesSchema = new mongoose.Schema(
       priceOfVehicle: String,
       financeRequired: String,
       tenure: String,
-      // add other vehicle fields as needed
     },
-    workflowStage: {
+    dealerDetails: {
+      name: String,
+      branch: String,
+    },
+    // ✅ Main status (for Pending / Approved / Rejected)
+    status: {
       type: String,
+      enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
+    // ✅ Workflow stage (tracks process pipeline)
+    workflowStage: {
+      type: String,
+      default: "contact creation", // first stage
+    },
+    history: [
+      {
+        stage: String,
+        updatedAt: { type: Date, default: Date.now },
+      },
+    ],
     createdAt: {
       type: Date,
       default: Date.now,
     },
+    updatedAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
-  { collection: "applications" } // Important: points to existing collection
+  { collection: "applications" } // ⚡ Still mapped to applications collection
 );
 
 const PendingFiles = mongoose.model("PendingFiles", pendingFilesSchema);
