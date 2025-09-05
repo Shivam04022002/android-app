@@ -8,6 +8,7 @@ import cors from 'cors';
 import connectDB from './config/db.js';
 import applicationRoutes from './routes/applicationRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import pendingFilesRoutes from "./routes/pendingFilesRoutes.js";
 
 
 
@@ -20,7 +21,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 const allowedOrigins = ["http://localhost:8081",
   "http://localhost:3000",  
-  "http://192.168.1.126:8081",];
+  "http://192.168.29.101:8081",];
 app.use(cors({      
   origin: true,
   credentials: true,

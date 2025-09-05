@@ -202,7 +202,7 @@ export default function ApplicationFormScreen({ navigation }) {
     });
 
     const response = await axios.post(
-      "http://192.168.1.126:5000/api/applications/upload-image",
+      "http://192.168.29.102:5000/api/applications/upload-image",
       formData,
       {
         headers: { "Content-Type": "multipart/form-data" },
@@ -250,7 +250,7 @@ export default function ApplicationFormScreen({ navigation }) {
       };
 
       const res = await axios.post(
-        'http://192.168.1.126:5000/api/applications/submit',
+        'http://192.168.29.102:5000/api/applications/submit',
         payload,
         {
           headers: {
@@ -319,7 +319,7 @@ export default function ApplicationFormScreen({ navigation }) {
                 <FieldImage label="Aadhar Image (Back)" value={applicantForm.aadharBack}
                   onPick={useCallback(() => pickImage(url => updateApplicantForm('aadharBack', url)), [updateApplicantForm])} err={errors.applicant.aadharBack} />
                 <FieldImage label="PAN Card Image" value={applicantForm.panImage}
-                  onPick={useCallback(() => pickImage(url => updateApplicantForm('panImage', url)), [updateApplicantForm])} err={errors.applicant.panImage} />
+                  onPick={useCallback(() => pickImage(url => updateApplicantForm('panImage', url)), [updat+eApplicantForm])} err={errors.applicant.panImage} />
                 <FieldText label="Post Office" value={applicantForm.postOffice} onChange={onChangeApplicantPostOffice} err={errors.applicant.postOffice} />
                 <FieldText label="Co-Applicant Name" value={applicantForm.coApplicantName} onChange={onChangeApplicantCoApplicantName} />
               </View>

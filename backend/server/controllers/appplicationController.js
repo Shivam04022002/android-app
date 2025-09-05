@@ -4,7 +4,7 @@ import VehicleDetails from "../models/VehicleDetails.js";
 
 // Full application (applicant + coApplicant + vehicleDetails)
 export const submitApplication = async (req, res) => {
-console.log("✅ Inside submitApplication controller");
+console.log(" Inside submitApplication controller");
   console.log("req.body:", req.body);
   console.log("req.user:", req.user);
   

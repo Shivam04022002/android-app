@@ -5,33 +5,8 @@ import {
 import Navbar from '../components/Navbar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import axios from 'axios';  
 
-const mockFiles = [
-  {
-    id: 'LN-2025-001',
-    userId: 'USR001',
-    name: 'John Smith',
-    date: '2025-05-10'
-  },
-  {
-    id: 'LN-2025-002',
-    userId: 'USR002',
-    name: 'Maria Garcia',
-    date: '2025-05-12'
-  },
-  {
-    id: 'LN-2025-003',
-    userId: 'USR003',
-    name: 'Robert Johnson',
-    date: '2025-05-14'
-  },
-  {
-    id: 'LN-2025-004',
-    userId: 'USR004',
-    name: 'Sarah Williams',
-    date: '2025-05-15'
-  }
-];
 
 export default function PendingFilesScreen({ navigation }) {
   const [user, setUser] = useState(null);
@@ -46,8 +21,20 @@ export default function PendingFilesScreen({ navigation }) {
     };
     loadUser();
 
-    setFiles(mockFiles);
+       const fetchPendingFiles = async () => {
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        const response = await axios.get("http://192.168.29.102:5000/api/pending-files",{ headers: {
+        Authorization: `Bearer ${token}`,
+      },});
+        setFiles(response.data);
+      } catch (error) {
+        console.error("Error fetching pending files:", error);
+      }
+    };
+    fetchPendingFiles();
   }, []);
+    
 
   const getFilteredFiles = () => {
     if (!startDate && !endDate) return files;
@@ -77,7 +64,7 @@ export default function PendingFilesScreen({ navigation }) {
             <Text style={styles.filterLabel}>Start Date</Text>
             <TextInput
               style={styles.filterInput}
-              placeholder="YYYY-MM-DD"
+              placeholder="DD-MM-YYYY"
               placeholderTextColor="#888"
               value={startDate}
               onChangeText={setStartDate}
@@ -87,7 +74,7 @@ export default function PendingFilesScreen({ navigation }) {
             <Text style={styles.filterLabel}>End Date</Text>
             <TextInput
               style={styles.filterInput}
-              placeholder="YYYY-MM-DD"
+              placeholder="DD-MM-YYYY"
               placeholderTextColor="#888"
               value={endDate}
               onChangeText={setEndDate}
